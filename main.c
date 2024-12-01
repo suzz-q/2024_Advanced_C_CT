@@ -7,7 +7,7 @@
 int menu_count = 0; //메뉴 번호 인덱스
 int snack_count = 0;
 int order_count = 0; //주문 개수 체크 
-
+int receipt = 0; //이걸로 구조체 체크
 
 typedef struct
 {
@@ -33,7 +33,8 @@ typedef struct
 	int price;
 }customerOrder;
 
-customerOrder** order_list = NULL;
+customerOrder** order_list;
+
 
 
 
@@ -107,90 +108,120 @@ void reset_snack_menu()
 }
 
 //메뉴 출력, 주문 받기
-void service_mode(DrinkList** drink_menu, SnackList** snack_menu)
-{
-	//drink 메뉴 출력
+void service_mode(DrinkList** drink_menu, SnackList** snack_menu) {
 	printf("===========drink Menu ============\n");
-	for (int i = 0; i < menu_count; i++)
-	{
+	for (int i = 0; i < menu_count; i++) {
 		printf("%d : %s\t%d\t%d\n", i + 1, drink_menu[i]->name, drink_menu[i]->price, drink_menu[i]->count);
 	}
-
-	//snack메뉴 출력
+	//printf("%d : %s\t\t%d\t\t%d\n", 2, drink_menu[2]->name, drink_menu[2]->price, drink_menu[2]->count);
 	printf("========= snack Menu ============\n");
-	for (int i = 0; i < snack_count; i++)
-	{
+	for (int i = 0; i < snack_count; i++) {
 		printf("%d : %s\t%d\t%d\n", i + 1, snack_menu[i]->name, snack_menu[i]->price, snack_menu[i]->count);
 	}
 
-	int type; //1~3
-	FILE* receipt_fp = fopen("receipt.txt", "w");  //영수증 텍스트 파일 쓰기모드로 열기
+	int type; // 1~3
+	FILE* receipt_fp = fopen("receipt.txt", "w"); // 영수증 파일 생성
 
-	while (1)
-	{
+	if (receipt_fp == NULL) {
+		printf("영수증 파일을 열 수 없습니다!\n");
+		return;
+	}
+
+	while (1) {
 		printf("Type 1 for drink, 2 for snack, 3 for buy : ");
 		scanf("%d", &type);
 
-		if (type == 1) //drink 메뉴 주문
-		{
+		if (type == 1) { // drink 메뉴 주문
 			printf("Type drink id to buy : ");
 			scanf("%d", &type);
-			//배열의 인덱스 -1 에 위치한 메뉴명과 가격을 저장
-			if (type <= menu_count)
-			{
-				if (drink_menu[type - 1]->count != 0)
-				{
+
+			if (type <= menu_count) {
+				if (drink_menu[type - 1]->count != 0) {
+					// 주문 리스트 확장 및 초기화
 					order_list = (customerOrder**)realloc(order_list, (order_count + 1) * sizeof(customerOrder*));
-					fputs(drink_menu[type - 1], receipt_fp);
-					drink_menu[type - 1]->count--; //1감소
+					if (order_list == NULL) {
+						printf("메모리 재할당 실패!\n");
+						exit(1);
+					}
+					order_list[order_count] = (customerOrder*)malloc(sizeof(customerOrder));
+					if (order_list[order_count] == NULL) {
+						printf("메모리 할당 실패!\n");
+						exit(1);
+					}
+
+					
+					
+					strcpy(order_list[order_count]->name, drink_menu[type - 1]->name);
+					order_list[order_count]->price = drink_menu[type - 1]->price;
+
+					fprintf(receipt_fp, "%s\t%d\n", order_list[order_count]->name, order_list[order_count]->price);
+					if (order_list[order_count]->name == NULL) printf("error\n");
+					else printf("%s\t%d\n", order_list[order_count]->name, order_list[order_count]->price);
+					drink_menu[type - 1]->count--; // 재고 감소
 					order_count++;
 				}
-				else //재고 0인 경우 : 주문 불가 메세지 출력
-				{
-					printf("Out of stock!");
+				else {
+					printf("Out of stock!\n");
 				}
 			}
-			else
-			{
-				printf("It isn't exist on list .");
+			else {
+				printf("It isn't exist on the list.\n");
 			}
 
-
-
 		}
-		else if (type == 2) //snack 메뉴 주문
-		{
+		else if (type == 2) { // snack 메뉴 주문
 			printf("Type snack id to buy : ");
 			scanf("%d", &type);
-			if (type <= snack_count)
-			{
-				if (snack_menu[type - 1]->count != 0)
-				{
+
+			if (type <= snack_count) {
+				if (snack_menu[type - 1]->count != 0) {
+					// 주문 리스트 확장 및 초기화
 					order_list = (customerOrder**)realloc(order_list, (order_count + 1) * sizeof(customerOrder*));
-					fputs(snack_menu[type - 1], receipt_fp);
-					snack_menu[type - 1]->count--; //1감소
+					if (order_list == NULL) {
+						printf("메모리 재할당 실패!\n");
+						exit(1);
+					}
+					order_list[order_count] = (customerOrder*)malloc(sizeof(customerOrder));
+					if (order_list[order_count] == NULL) {
+						printf("메모리 할당 실패!\n");
+						exit(1);
+					}
+
+					// 주문 데이터 복사
+					printf("%s\n", snack_menu[type - 1]->name);
+					strcpy(order_list[order_count]->name, snack_menu[type - 1]->name);
+					order_list[order_count]->price = snack_menu[type - 1]->price;
+
+					fprintf(receipt_fp, "%s\t%d\n", order_list[order_count]->name, order_list[order_count]->price);
+					
+
+					snack_menu[type - 1]->count--; // 재고 감소
 					order_count++;
 				}
-				else
-				{
-					printf("Out of stock!");
-					continue;
+				else {
+					printf("Out of stock!\n");
 				}
 			}
-			else
-			{
-				printf("It isn't exist on list .");
+			else {
+				printf("It isn't exist on the list.\n");
 			}
 
 		}
-		else if (type == 3)
-		{
+		else if (type == 3) { // 구매 완료
 			break;
+		}
+		else {
+			printf("Invalid option!\n");
 		}
 	}
 
+	fclose(receipt_fp);
 
-
+	// 주문 리스트 메모리 해제
+	for (int i = 0; i < order_count; i++) {
+		free(order_list[i]);
+	}
+	free(order_list);
 }
 
 char print_receipt() //영수증 발급
