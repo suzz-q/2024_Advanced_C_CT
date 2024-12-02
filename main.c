@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+void print_receipt();
 
 int menu_count = 0; //메뉴 번호 인덱스
 int snack_count = 0;
@@ -108,7 +109,7 @@ void reset_snack_menu()
 }
 
 //메뉴 출력, 주문 받기
-void service_mode(DrinkList** drink_menu, SnackList** snack_menu) {
+void service_mode() {
 	printf("===========drink Menu ============\n");
 	for (int i = 0; i < menu_count; i++) {
 		printf("%d : %s\t%d\t%d\n", i + 1, drink_menu[i]->name, drink_menu[i]->price, drink_menu[i]->count);
@@ -120,12 +121,7 @@ void service_mode(DrinkList** drink_menu, SnackList** snack_menu) {
 	}
 
 	int type; // 1~3
-	FILE* receipt_fp = fopen("receipt.txt", "w"); // 영수증 파일 생성
-
-	if (receipt_fp == NULL) {
-		printf("영수증 파일을 열 수 없습니다!\n");
-		return;
-	}
+	
 
 	while (1) {
 		printf("Type 1 for drink, 2 for snack, 3 for buy : ");
@@ -154,9 +150,7 @@ void service_mode(DrinkList** drink_menu, SnackList** snack_menu) {
 					strcpy(order_list[order_count]->name, drink_menu[type - 1]->name);
 					order_list[order_count]->price = drink_menu[type - 1]->price;
 
-					fprintf(receipt_fp, "%s\t%d\n", order_list[order_count]->name, order_list[order_count]->price);
-					if (order_list[order_count]->name == NULL) printf("error\n");
-					else printf("%s\t%d\n", order_list[order_count]->name, order_list[order_count]->price);
+					
 					drink_menu[type - 1]->count--; // 재고 감소
 					order_count++;
 				}
@@ -187,12 +181,12 @@ void service_mode(DrinkList** drink_menu, SnackList** snack_menu) {
 						exit(1);
 					}
 
-					// 주문 데이터 복사
-					printf("%s\n", snack_menu[type - 1]->name);
+					
+
+					//주문 내용 구조체에 붙여넣기
 					strcpy(order_list[order_count]->name, snack_menu[type - 1]->name);
 					order_list[order_count]->price = snack_menu[type - 1]->price;
 
-					fprintf(receipt_fp, "%s\t%d\n", order_list[order_count]->name, order_list[order_count]->price);
 					
 
 					snack_menu[type - 1]->count--; // 재고 감소
@@ -215,7 +209,9 @@ void service_mode(DrinkList** drink_menu, SnackList** snack_menu) {
 		}
 	}
 
-	fclose(receipt_fp);
+	print_receipt();
+
+	
 
 	// 주문 리스트 메모리 해제
 	for (int i = 0; i < order_count; i++) {
@@ -224,19 +220,30 @@ void service_mode(DrinkList** drink_menu, SnackList** snack_menu) {
 	free(order_list);
 }
 
-char print_receipt() //영수증 발급
+void print_receipt() //영수증 발급
 {
+	FILE* receipt_fp = fopen("receipt.txt", "w"); // 영수증 파일 생성
+
+	if (receipt_fp == NULL) {
+		printf("영수증 파일을 열 수 없습니다!\n");
+		return;
+	}
 
 	int total = 0;
 	for (int i = 0; i < order_count; i++)
 	{
-		//total+=receipt
+		total += order_list[i]->price;
 	}
 	printf("=======Receipt=========\n");
-	/*
-	* 이곳에 주문 메뉴 이름과 가격이 한줄씩 출력되게 해야함
-	*/
+	for (int i = 0; i < order_count; i++)
+	{
+		fprintf(receipt_fp, "%s\t%d\n", order_list[i]->name, order_list[i]->price);
+		printf("%s\t%d\n", order_list[i]->name, order_list[i]->price);
+	}
+	printf("Total:%d", total);
+	fprintf(receipt_fp, "Total : %d", total);
 	printf("=======================");
+	fclose(receipt_fp);
 }
 //admin or user
 int check_ID(char* input[], int* id_index)
@@ -283,7 +290,7 @@ int main(void)
 		printf("user mode\n\n");
 		reset_drink_menu();
 		reset_snack_menu();
-		service_mode(drink_menu, snack_menu);
+		service_mode();
 	}
 
 
